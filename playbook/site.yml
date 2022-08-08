@@ -21,6 +21,7 @@
             dest: "./clickhouse-common-static-{{ clickhouse_version }}.rpm"
     - name: Install clickhouse packages
       become: true
+      become_user: root
       ansible.builtin.yum:
         name:
           - clickhouse-common-static-{{ clickhouse_version }}.rpm
@@ -32,3 +33,36 @@
       register: create_db
       failed_when: create_db.rc != 0 and create_db.rc !=82
       changed_when: create_db.rc == 0
+# Install Vector
+- name: Install Vector
+  hosts: clickhouse
+  tasks:
+    - name: Install Vector
+      become: true
+      yum:
+        name: https://packages.timber.io/vector/{{ vector_version }}/vector-{{ vector_version }}-1.{{ ansible_architecture }}.rpm
+        state: present
+      notify: restart vector service
+      register: get_vector
+      tags: vector_install
+    - name: Configure Vector | ensure what directory exists
+      file:
+        path: "{{ vector_config_dir }}"
+        state: directory
+        mode: 0644
+      register: vector_confdir_check
+      tags: vector_confdir_check
+    - name: Configure Vector | copy template config
+      template:
+        src: vector.yml.j2
+        mode: 0644
+        dest: "{{ vector_config_dir }}/vector.yml"
+      tags: vector_copy_conf
+    - name: Configure Service | Template systemd unit
+      become: true
+      template:
+        src: vector.service.j2
+        dest: /etc/systemd/system/vector.service
+        mode: 0644
+      notify: restart vector service
+      tags: vector_copy_service_conf

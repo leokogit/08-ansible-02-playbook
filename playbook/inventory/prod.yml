@@ -1,5 +1,18 @@
 ---
 clickhouse:
   hosts:
-    clickhouse-01:
-      ansible_host: <IP_here>
+    clickhouse:
+      ansible_host: 51.250.x.x
+      ansible_connection: ssh
+      ansible_user: centos
+vector:
+  hosts:
+    vector:
+      ansible_host: 51.250.x.x
+      ansible_connection: ssh
+      ansible_user: centos
+local:
+  hosts:
+    localhost:
+      ansible_host: localhost
+      ansible_connection: local
